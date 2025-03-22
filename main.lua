@@ -1,13 +1,17 @@
 -- server/main.lua
-local module = require("modules/core")
+local core = require("modules/core")
 
-print("Base Control Server Online")
-print("ID: "..os.getComputerID())
-
-rednet.open("right") -- Change to your modem side
+rednet.open("right")
+print("Server ID: "..os.getComputerID())
 
 while true do
-    local id, message = rednet.receive()
-    print("Received: "..message)
-    rednet.send(id, "ACK: "..message)
+    local id, msg = core.receive()
+    if msg then
+        print("From "..msg.sender..": "..msg.command)
+        core.send(id, core.createMessage(
+            "server",
+            "ACK",
+            "Received: "..msg.command
+        ))
+    end
 end
