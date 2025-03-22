@@ -1,53 +1,56 @@
--- update.lua
+-- Updater.lua (Fixed Path Handling)
 local USER = "JackT1009"
 local REPO = "Base-Controller"
-local INSTALL_DIR = "base"
+local INSTALL_DIR = "basecontrol"
 
--- Auto-detect branch
-local branch = "main-server"
-if os.getComputerLabel() ~= "BaseCore" then
-    branch = "main-terminal"
-end
+local branch = os.getComputerLabel() == "BaseCore" 
+    and "main-server" 
+    or "main-terminal"
 
--- File lists
-local files = {
-    ["main-server"] = {
-        "server/main.lua",
-        "modules/core.lua"
-    },
-    ["main-terminal"] = {
-        "terminal/main.lua",
-        "modules/core.lua"
-    }
+local FILES = {
+    "main.lua",
+    "update.lua",
+    "modules/core.lua"
 }
 
--- Main install routine
-print("Installing "..branch)
+print("=== INSTALLER ===")
 fs.delete(INSTALL_DIR)
 fs.makeDir(INSTALL_DIR)
 
-local success = true
-for _,path in pairs(files[branch]) do
+for _,file in ipairs(FILES) do
+    -- Construct URL and path
     local url = "https://raw.githubusercontent.com/"..
-        USER.."/"..REPO.."/"..branch.."/"..path
+        USER.."/"..REPO.."/"..branch.."/"..file
+        
+    local path = fs.combine(INSTALL_DIR, file)
+    local dir = fs.getDir(path)
     
-    print("Downloading "..path)
+    -- Debug output
+    print("URL:", url)
+    print("Path:", path)
+    print("Dir:", dir)
+    
+    -- Create directory structure
+    if not fs.exists(dir) then
+        print("Creating dir:", dir)
+        fs.makeDir(dir)
+    end
+    
+    -- Download and write
     local response = http.get(url)
-    
     if response then
-        local fullPath = fs.combine(INSTALL_DIR, path)
-        fs.makeDir(fs.getDir(fullPath))
-        fs.open(fullPath, "w").write(response.readAll()).close()
+        local handle = fs.open(path, "w")
+        if handle then
+            handle.write(response.readAll())
+            handle.close()
+            print("✓ Written:", path)
+        else
+            print("✗ Failed to open:", path)
+        end
     else
-        print("FAILED: "..url)
-        success = false
+        print("✗ Missing:", url)
     end
 end
 
-if success then
-    print("\nInstall complete! Run:")
-    print("cd "..INSTALL_DIR)
-    print(branch == "main-server" and "server/main" or "terminal/main")
-else
-    print("\nInstallation failed - verify files exist")
-end
+print("\nFinal directory contents:")
+print(textutils.tabulate(fs.list(INSTALL_DIR)))
