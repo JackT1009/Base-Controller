@@ -3,34 +3,45 @@ local modem = peripheral.find("modem") or error("Modem required")
 local monitor = peripheral.find("monitor") or term
 rednet.open(peripheral.getName(modem))
 
--- Setup
+-- Configure monitor display
 monitor.clear()
-monitor.setTextScale(0.5)
-monitor.setCursorPos(1,1)
-monitor.write("FLOOR 1 CONTROL\n")
+monitor.setTextScale(0.5) -- Smaller text for more lines
+local width, height = monitor.getSize()
 
--- Register with server
-rednet.send(1, "REGISTER") -- Send to server ID 1
-local _, response = rednet.receive(5)
+-- Display header
+monitor.setCursorPos(1,1)
+monitor.write("== FLOOR 1 CONTROL ==")
+
+-- Registration
+monitor.setCursorPos(1,3)
+rednet.send(1, "REGISTER")
+local _, response = rednet.receive(2)
 monitor.write("Status: "..(response or "No connection!"))
 
--- Main interface
+-- Main interface function
+local function drawMenu()
+    monitor.setCursorPos(1,5)
+    monitor.write("1. Lights On  ") -- Clear line with spaces
+    monitor.setCursorPos(1,6)
+    monitor.write("2. Lights Off ")
+    monitor.setCursorPos(1,8)
+    monitor.write("Last response: ")
+end
+
+-- Main loop
 while true do
-    monitor.setCursorPos(1,4)
-    monitor.write("1. Lights On\n")
-    monitor.write("2. Lights Off\n")
+    drawMenu()
     
     local event, side, x, y = os.pullEvent("monitor_touch")
     
-    if y == 4 then -- Lights On
+    if y == 5 then -- Lights On
         rednet.send(1, "LIGHTS-ON")
-    elseif y == 5 then -- Lights Off
+    elseif y == 6 then -- Lights Off
         rednet.send(1, "LIGHTS-OFF")
     end
     
     -- Get response
     local _, msg = rednet.receive(2)
     monitor.setCursorPos(1,8)
-    monitor.write("Last response: ")
-    monitor.write(msg or "Timeout!")
+    monitor.write("Last response: "..(msg or "Timeout!     "))
 end
