@@ -1,26 +1,48 @@
 local core = require("modules/core")
 
-rednet.open("left")
-local termName = os.getComputerLabel() or "Terminal"
+-- Initialize modem
+core.initializeModem("left")  -- Change to your modem side
 
+-- Terminal setup
+local termName = os.getComputerLabel() or "UnnamedTerminal"
+print("Terminal Online:", termName)
+
+-- Main loop
 while true do
-    write("> ")
-    local input = read()
+    -- Safe input handling
+    term.write("> ")
+    local input = string.trim(read() or "")
     
-    if input == "exit" then break end
+    if input == "" then
+        print("Error: Empty command")
+        goto continue
+    end
     
-    core.send(1, {
-        sender = termName,
-        command = input,
-        data = {}
-    })
+    if input == "exit" then
+        print("Shutting down...")
+        break
+    end
     
-    local id, response = core.receive()
+    -- Create validated message
+    local message = core.createMessage(termName, input, {})
+    
+    -- Send with error handling
+    local ok, err = pcall(function()
+        core.send(1, message)  -- Send to server ID 1
+    end)
+    
+    if not ok then
+        print("Send failed:", err)
+        goto continue
+    end
+    
+    -- Receive response
+    local _, response = core.receive()
     if response then
-        print(("Response: %s"):format(
-            response.data or "no-data"
-        ))
+        print("Server:", response.command)
     else
         print("No response")
     end
+    
+    ::continue::
 end
