@@ -1,18 +1,11 @@
 local M = {
-    PROTOCOL = "BASECTRL",  -- Changed to string protocol
+    PROTOCOL = "BASECTRL",
     TIMEOUT = 5
 }
 
-function M.createMessage(sender, command, data)
-    return {
-        timestamp = os.epoch("utc"),
-        sender = sender,
-        command = command,
-        data = data
-    }
-end
-
 function M.send(target, message)
+    message = message or {}
+    message.timestamp = os.epoch("utc")
     rednet.send(target, textutils.serialize(message), M.PROTOCOL)
 end
 
@@ -21,7 +14,11 @@ function M.receive()
     if not message then return nil, "Timeout" end
     
     local success, data = pcall(textutils.unserialize, message)
-    return success and id or nil, data
+    if not success then
+        return nil, "Invalid message format"
+    end
+    
+    return id, data
 end
 
 return M
