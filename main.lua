@@ -1,21 +1,18 @@
 local core = require("modules/core")
 
+-- Initialize
 rednet.open("left")
 local termName = os.getComputerLabel() or "Terminal"
 
 while true do
-    write(termName.."> ")
+    write("> ")
     local input = read()
     
     if input == "exit" then break end
     
-    local msg = core.createMessage(termName, input, {})
-    core.send(core.CHANNEL, msg)
-    
+    -- Send and receive with error handling
+    core.send(1, core.createMessage(termName, input, {}))
     local id, response = core.receive()
-    if response then
-        print("Server response:", response.data)
-    else
-        print("No response from server")
-    end
+    
+    print(response and ("Server: "..response.data) or "No response")
 end
