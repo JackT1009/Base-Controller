@@ -1,23 +1,23 @@
 local M = {
-    CHANNEL = 45100,
+    PROTOCOL = "BASECTRL",  -- Changed to string protocol
     TIMEOUT = 5
 }
 
 function M.createMessage(sender, command, data)
-    return textutils.serialize({
+    return {
         timestamp = os.epoch("utc"),
         sender = sender,
         command = command,
         data = data
-    })
+    }
 end
 
 function M.send(target, message)
-    rednet.send(target, message, M.CHANNEL)
+    rednet.send(target, textutils.serialize(message), M.PROTOCOL)
 end
 
 function M.receive()
-    local id, message = rednet.receive(M.CHANNEL, M.TIMEOUT)
+    local id, message = rednet.receive(M.PROTOCOL, M.TIMEOUT)
     if not message then return nil, "Timeout" end
     
     local success, data = pcall(textutils.unserialize, message)
