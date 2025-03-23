@@ -8,17 +8,14 @@ local M = {
 -- ... (previous core.lua code remains the same)
 
 function M.initializeModem(side)
-    -- Validate side parameter
+    -- Validate modem exists on specified side
     if not peripheral.getType(side) == "modem" then
-        error("No modem on "..tostring(side))
+        error("No modem attached to "..side.." side")
     end
     
-    -- Get modem reference
-    local modem = peripheral.wrap(side)
-    rednet.open(side)  -- Open modem on specified side
-    
-    M.log("Modem initialized on", side)
-    return modem
+    -- Initialize modem properly
+    rednet.open(side)
+    M.log("Modem initialized on "..side)
 end
 
 return M
